@@ -8,10 +8,6 @@
     <script src="../lib/mocha.js" type="text/javascript"></script>
     <script src="../lib/chai.js" type="text/javascript"></script>
 
-    <script src="swan-tests.js" type="text/javascript"></script>
-</head>
-<body>
-    <div id="mocha"></div>
     <script type="text/javascript">
         mocha.setup('bdd');
         chai.should();
@@ -20,5 +16,11 @@
             mocha.run();
         };
     </script>
+
+    <script src="../src/swan.js" type="text/javascript"></script>
+    <script src="swan-tests.js" type="text/javascript"></script>
+</head>
+<body>
+    <div id="mocha"></div>
 </body>
 </html>
