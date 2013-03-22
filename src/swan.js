@@ -183,8 +183,6 @@
         }
     };
 
-    swan.use
-
     swan.expect = function(val, archetype, errMsg) {
         if(!swan.is(val, archetype)) {
             throw new Error(errMsg || "Expected value to be of archetype '" +  archetype + "'.");
