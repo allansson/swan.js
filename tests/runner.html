@@ -11,6 +11,7 @@
     <script type="text/javascript">
         mocha.setup('bdd');
         chai.should();
+        window.expect = chai.expect;
 
         window.onload = function() {
             mocha.run();

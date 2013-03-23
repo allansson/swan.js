@@ -1,6 +1,7 @@
 describe('swan.js', function() {
     beforeEach(function() {
         swan.reset();
+        swan.ecma5(false);
         swan.globalize(false);
     });
 
@@ -65,7 +66,7 @@ describe('swan.js', function() {
             var result = swan.is('my string', 'string');
 
             result.should.equal(true);
-        })
+        });
 
         it('should match primitive archetype number', function () {
             var result = swan.is(10.0, 'number');
@@ -106,13 +107,13 @@ describe('swan.js', function() {
 
     describe('complex type definition', function() {
         it('should register archetype when giving an evaluator function', function() {
-            var result = false,
+            var result,
                 obj = {
                 prop: true
             };
 
             swan.define('evaluator_function_type', {
-               evaluator: function(val) {
+               evaluator: function() {
                    return obj.prop;
                }
             });
@@ -123,7 +124,7 @@ describe('swan.js', function() {
         });
 
         it('should register archetype when giving a signature', function() {
-            var result = false,
+            var result,
                 obj = {
                 bool: true,
                 str: 'string',
@@ -148,7 +149,7 @@ describe('swan.js', function() {
         });
 
         it('should register archetype with mixins', function() {
-            var result = false,
+            var result,
 
                 obj = {
                     bool: true,
@@ -167,7 +168,7 @@ describe('swan.js', function() {
             swan.define('mixin2', {
                 bool: 'boolean',
                 func: 'function'
-            })
+            });
 
             swan.define('signature_type', {
                 mixins: ['mixin1', 'mixin2']
@@ -179,7 +180,7 @@ describe('swan.js', function() {
         });
 
         it('should register a pure mixin archetype when passing array as definition', function() {
-            var result = false,
+            var result,
                 obj = {
                     prop: true,
                     prop2: 'str',
@@ -206,7 +207,7 @@ describe('swan.js', function() {
         });
 
         it('should register a signature based archetype when passing a normal object as definition', function() {
-            var result = false,
+            var result,
                 obj = {
                     prop: true,
                     prop2: 'str',
@@ -224,7 +225,7 @@ describe('swan.js', function() {
         });
 
         it('should register a evaluator archetype when passing function as definition', function() {
-            var result = false,
+            var result,
                 obj = {
                     prop: true,
                     prop2: 'str',
@@ -243,7 +244,128 @@ describe('swan.js', function() {
 
     describe('archetype casting', function() {
         it('should return an object exposing only the archetype members', function() {
+            var result,
+                obj = {
+                    bool: true,
+                    str: 'my string',
+                    ignored: function() {}
+                };
 
+            swan.define('MyArchetype', {
+                signature: {
+                    bool: 'boolean',
+                    str: 'string'
+                }
+            });
+
+            result = swan.as(obj, 'MyArchetype');
+
+            if(expect(result).not.to.be.null) {}
+            result.should.have.property('bool');
+            result.should.have.property('str');
+            result.should.not.have.property('ignored');
+        });
+
+        it('should modify original object when using function on proxy', function() {
+            var proxy,
+                obj = {
+                    modified: false,
+                    func: function() {
+                        this.modified = true;
+                    }
+                };
+
+            swan.define('MyArchetype', {
+                signature: {
+                    func: 'function'
+                }
+            });
+
+            proxy = swan.as(obj, 'MyArchetype');
+            proxy.func();
+
+            obj.modified.should.equal(true);
+        });
+
+        it('should modify original property when using property on proxy', function() {
+            var proxy,
+                obj = {
+                    modified: false
+                };
+
+            swan.define('MyArchetype', {
+                signature: {
+                    modified: 'boolean'
+                }
+            });
+
+            proxy = swan.as(obj, 'MyArchetype');
+            proxy.modified(true);
+
+            obj.modified.should.equal(true);
+        });
+
+        it('should return a function property when ecma5 is disabled', function() {
+            var proxy,
+                obj = {
+                    modified: false
+                };
+
+            swan.ecma5(false);
+            
+            swan.define('MyArchetype', {
+                signature: {
+                    modified: 'boolean'
+                }
+            });
+
+            proxy = swan.as(obj, 'MyArchetype');
+
+            proxy.modified.should.be.a('function');
+        });
+
+        it('should return a setter/getter property when ecma5 is enabled', function() {
+            var proxy,
+                descriptor,
+                obj = {
+                    modified: false
+                };
+
+            swan.ecma5();
+            
+            swan.define('MyArchetype', {
+                signature: {
+                    modified: 'boolean'
+                }
+            });
+
+            proxy = swan.as(obj, 'MyArchetype');
+            descriptor = Object.getOwnPropertyDescriptor(proxy, 'modified');
+
+            descriptor.should.have.property('get');
+            descriptor.get.should.be.a('function');
+            descriptor.should.have.property('set');
+            descriptor.set.should.be.a('function');
+        });
+
+        it('should modify original object when assigning property with ecma5 enabled', function() {
+            var proxy,
+                obj = {
+                    modified: false
+                };
+
+            swan.ecma5();
+
+            swan.define('MyArchetype', {
+                signature: {
+                    modified: 'boolean'
+                }
+            });
+
+            proxy = swan.as(obj, 'MyArchetype');
+            proxy.modified = true;
+
+            obj.modified.should.equal(true);
         });
     });
-})
+});

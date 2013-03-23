@@ -1,9 +1,12 @@
-(function (global) {
+var window = window || {},
+    module = module || {};
+
+(function (window, module) {
     "use strict";
 
     function complexTypeEvaluator(mixins, signature) {
         function evaluateMixins(val, mixins) {
-            var i = 0;
+            var i;
 
             for(i = 0; i < mixins.length; ++i) {
                 if(!swan.is(val, mixins[i])) {
@@ -15,7 +18,7 @@
         }
 
         function evaluateSignature(val, signature) {
-            var prop = null;
+            var prop;
 
             for(prop in signature) {
                 if(signature.hasOwnProperty(prop)) {
@@ -34,6 +37,7 @@
     }
 
     var definitions = {},
+        propertyProxyFactory = null,
         swan = function(val) {
 
             return {
@@ -51,11 +55,11 @@
 
     swan.define = function(archetype, definition) {
         var i = 0,
-            mixins = null,
-            signature = null,
-            evaluator = null,
+            mixins,
+            signature,
+            evaluator,
             
-            prop = null;
+            prop;
 
         if(!swan.is(definitions[archetype], 'undefined')) {
             throw new Error("An archetype with name '" + archetype + "' already exists.");
@@ -128,7 +132,7 @@
             signature: signature,
             evaluator: evaluator
         };
-    }
+    };
 
     swan.globalize = function(toggle) {
         if(swan.is(toggle, 'undefined')) {
@@ -183,6 +187,50 @@
         }
     };
 
+    swan.ecma5 = function(toggle) {
+        if(swan.is(toggle, 'undefined')) {
+            toggle = true;
+        }
+
+        function ecmaPropertyProxyFactory(target, obj, prop, type) {
+            var propertyProxy = {
+                    enumerable: false,
+                    configurable: false
+                },
+                propertyDescriptor = Object.getOwnPropertyDescriptor(obj, prop);
+
+            if(swan.is(propertyDescriptor.getter, 'function') || !swan.is(propertyDescriptor.value, 'undefined')) {
+                propertyProxy.get = function() {
+                    return obj[prop];
+                };
+            }
+
+            if(swan.is(propertyDescriptor.setter, 'function') || !swan.is(propertyDescriptor.value, 'undefined')) {
+                propertyProxy.set = function(value) {
+                    if(swan.is(value, type)) {
+                        obj[prop] = value;
+                    }
+                };
+
+                propertyProxy.writeable = true;
+            }
+
+            Object.defineProperty(target, prop, propertyProxy);
+        }
+
+        function functionPropertyProxyFactory(target, obj, prop, type) {
+            target[prop] = function(value) {
+                if(swan.is(value, type)) {
+                    obj[prop] = value;
+                }
+
+                return obj[prop];
+            };
+        }
+
+        propertyProxyFactory = toggle ? ecmaPropertyProxyFactory : functionPropertyProxyFactory;
+    };
+
     swan.expect = function(val, archetype, errMsg) {
         if(!swan.is(val, archetype)) {
             throw new Error(errMsg || "Expected value to be of archetype '" +  archetype + "'.");
@@ -190,7 +238,7 @@
     };
 
     swan.is = function(val, archetypeN) {
-        var i = 0,
+        var i,
             definition = null;
 
         for(i = 1; i < arguments.length; i += 1) {
@@ -209,7 +257,7 @@
     };
 
     swan.as = function(val, archetypeN) {
-        var i = 1,
+        var i,
             proxy = {};
 
         function functionProxy(self, f) {
@@ -219,7 +267,7 @@
         }
 
         function writeProperties(val, signature, target) {
-            var prop = null;
+            var prop;
 
             for(prop in signature) {
                 if(signature.hasOwnProperty(prop)) {
@@ -234,7 +282,7 @@
                     if(signature[prop] === 'function') {
                         target[prop] = functionProxy(val, val[prop]);
                     } else {
-                        target[prop] = val[prop];
+                        propertyProxyFactory(target, val, prop, signature[prop]);
                     }
                 }
             }
@@ -243,7 +291,7 @@
         }
 
         function mergeMixins(val, mixins, target) {
-            var i = 0;
+            var i;
 
             for(i = 0; i < mixins.length; i += 1) {
                 try {
@@ -254,6 +302,8 @@
                     throw new Error("Failed to infer extending archetype '" + mixins[i] + "'. Reason was: " + err.message);
                 }
             }
+
+            return target;
         }
 
         function buildProxy(val, archetype, target) {
@@ -288,7 +338,7 @@
             "any": {
                 mixins: [],
                 signature: {},
-                evaluator: function(val) {
+                evaluator: function() {
                     return true;
                 }
             },
@@ -350,5 +400,7 @@
     };
 
     swan.reset();
-    global.swan = swan;
-}(this));
+    swan.ecma5(false);
+
+    window.swan = module.export = swan;
+}(window, module));
