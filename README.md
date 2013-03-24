@@ -32,7 +32,7 @@ Simply download the script and reference it from your code.
 Swan.js requires little to no configuration. However, due to browser compatibility and general best practices in
 javascript, some behaviors need to be toggle manually.
 
-#### `Object.prototype` extensions
+#### Object.prototype extensions
 Some people might find the normal swan-syntax a little too verbose, and prefer it if you could call the `.is()`, `.as()`
 and `.expect()` functions directly on any object. Since extensions on the `Object.prototype` are not uniformly supported
 in browsers, and also generally discouraged, this behavior is turned of by default. To enable it, issues the following
