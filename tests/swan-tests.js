@@ -242,6 +242,67 @@ describe('swan.js', function() {
         });
     });
 
+    describe('archetype checking', function() {
+        it('should not throw error when value matches archetype', function() {
+            var error = {};
+
+            swan.define('MyArchetype', {
+                signature: {
+                    bool: 'boolean'
+                }
+            });
+
+            try {
+                swan.expect({ bool: true }, 'MyArchetype');
+            } catch (err) {
+                error = err;
+            }
+
+            error.should.not.be.instanceOf(Error);
+        });
+
+        it('should throw an error with generic error message when value does not match archetype', function() {
+            var error = {};
+
+            swan.define('MyArchetype', {
+                signature: {
+                    bool: 'boolean'
+                }
+            });
+
+            try {
+                swan.expect({ str: 'my string' }, 'MyArchetype');
+            } catch (err) {
+                error = err;
+            }
+
+            error.should.be.instanceof(Error);
+            error.should.have.property('message');
+            error.message.should.be.a('string');
+        });
+
+        it('should throw an error with given error message when value does not match archetype', function() {
+            var errorMsg = 'My error message',
+                error = {};
+
+            swan.define('MyArchetype', {
+                signature: {
+                    bool: 'boolean'
+                }
+            });
+
+            try {
+                swan.expect({ str: 'my string' }, 'MyArchetype', errorMsg);
+            } catch (err) {
+                error = err;
+            }
+
+            error.should.be.instanceof(Error);
+            error.should.have.property('message');
+            error.message.should.equal(errorMsg);
+        });
+    });
+
     describe('archetype casting', function() {
         it('should return an object exposing only the archetype members', function() {
             var result,
